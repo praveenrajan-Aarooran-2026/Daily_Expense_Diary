@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="theme-color" content="#0b3d2e" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Expense Diary" />
+<title>Daily Expense Diary Tracker</title>
+<link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Daily%20Expense%20Diary%20Tracker%22%2C%22short_name%22%3A%22Expense%20Diary%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23faf8f3%22%2C%22theme_color%22%3A%22%230b3d2e%22%2C%22start_url%22%3A%22.%22%2C%22icons%22%3A%5B%5D%7D" />
+<style>
+  :root {
+    --bg: #faf8f3;
+    --surface: #ffffff;
+    --ink: #15241c;
+    --ink-soft: #5a6b62;
+    --ink-faint: #9aa89f;
+    --line: #e6e3da;
+    --green: #0b3d2e;
+    --green-soft: #e4f0e9;
+    --green-text: #126b4a;
+    --red: #b23a30;
+    --red-soft: #fbeae8;
+    --accent: #e8a33d;
+    --upi: #6a5acd;
+    --cash: #2e8b57;
+    --card: #2f6fb3;
+    --bank: #c08229;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --shadow: 0 1px 2px rgba(21,36,28,0.04), 0 8px 24px rgba(21,36,28,0.05);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.5;
+    min-height: 100vh;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .app { max-width: 540px; margin: 0 auto; padding: 0 16px 120px; }
+
+  header {
+    padding: calc(env(safe-area-inset-top) + 24px) 0 8px;
+    display: flex; align-items: flex-start; justify-content: space-between;
+  }
+  .lang-btn {
+    border: 1.5px solid var(--line); background: var(--surface); color: var(--green);
+    border-radius: 30px; padding: 7px 16px; font-size: 14px; font-weight: 700;
+    cursor: pointer; font-family: inherit; flex-shrink: 0; margin-top: 4px;
+  }
+  .lang-btn:active { background: var(--bg); }
+  .brand { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; color: var(--green); }
+  .brand span { color: var(--accent); }
+  .tagline { font-size: 12px; color: var(--ink-faint); font-weight: 500; }
+
+  .balance-card {
+    background: var(--green);
+    color: #eef6f1;
+    border-radius: var(--radius);
+    padding: 22px 22px 20px;
+    margin-top: 16px;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  .balance-card .lbl { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.7; font-weight: 600; }
+  .balance-card .amt { font-size: 38px; font-weight: 800; letter-spacing: -0.03em; margin: 4px 0 16px; }
+  .balance-split { display: flex; gap: 10px; }
+  .balance-split .b { flex: 1; background: rgba(255,255,255,0.08); border-radius: var(--radius-sm); padding: 11px 13px; }
+  .balance-split .b .k { font-size: 11px; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+  .balance-split .b .v { font-size: 19px; font-weight: 800; margin-top: 3px; }
+  .balance-flow { display: flex; gap: 18px; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.12); }
+  .balance-flow .f { font-size: 13px; opacity: 0.85; font-weight: 500; }
+  .balance-flow .f b { font-weight: 800; }
+  .balance-flow .f.in b { color: #8fe3bd; }
+  .balance-flow .f.out b { color: #f3b0a8; }
+
+  .add-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px;
+    margin-top: 16px;
+  }
+  .seg { display: flex; background: var(--bg); border-radius: var(--radius-sm); padding: 4px; gap: 4px; margin-bottom: 14px; }
+  .seg button {
+    flex: 1; border: none; background: transparent; padding: 10px; border-radius: 8px;
+    font-size: 14px; font-weight: 700; color: var(--ink-soft); cursor: pointer; transition: all 0.15s;
+  }
+  .seg button.active.out { background: var(--red-soft); color: var(--red); }
+  .seg button.active.in { background: var(--green-soft); color: var(--green-text); }
+
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--ink-soft); margin-bottom: 5px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  input, select {
+    width: 100%; border: 1.5px solid var(--line); background: var(--surface);
+    border-radius: var(--radius-sm); padding: 12px 13px; font-size: 16px; color: var(--ink);
+    font-family: inherit; outline: none; transition: border-color 0.15s;
+  }
+  input:focus, select:focus { border-color: var(--green); }
+  .amount-input { position: relative; }
+  .amount-input span { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--ink-faint); font-size: 16px; font-weight: 600; }
+  .amount-input input { padding-left: 28px; font-weight: 700; }
+
+  .methods { display: flex; gap: 8px; flex-wrap: wrap; }
+  .methods .m {
+    flex: 1; min-width: 64px; text-align: center; padding: 10px 4px; border: 1.5px solid var(--line);
+    border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; color: var(--ink-soft); cursor: pointer; transition: all 0.15s;
+  }
+  .methods .m.active { border-color: currentColor; }
+  .methods .m[data-m="UPI"].active { color: var(--upi); background: #efedfb; }
+  .methods .m[data-m="Cash"].active { color: var(--cash); background: #e7f3ec; }
+  .methods .m[data-m="Card"].active { color: var(--card); background: #e9f1f9; }
+  .methods .m[data-m="Bank"].active { color: var(--bank); background: #f8efde; }
+
+  .submit {
+    width: 100%; border: none; border-radius: var(--radius-sm); padding: 15px;
+    font-size: 16px; font-weight: 700; color: #fff; cursor: pointer; margin-top: 14px; transition: transform 0.1s, opacity 0.15s;
+  }
+  .submit.out { background: var(--red); }
+  .submit.in { background: var(--green-text); }
+  .submit:active { transform: scale(0.985); }
+
+  .list-head { display: flex; align-items: center; justify-content: space-between; margin: 26px 2px 12px; }
+  .list-head h2 { font-size: 16px; font-weight: 700; margin: 0; }
+  .filters { display: flex; gap: 8px; margin-bottom: 8px; }
+  .filters input[type="text"] { flex: 1; padding: 10px 12px; font-size: 14px; }
+  .filters input[type="number"] { flex: 1; padding: 10px 12px; font-size: 14px; }
+  .filters select { flex: 1; padding: 10px 12px; font-size: 14px; }
+  .datewrap { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+  .datewrap label { font-size: 11px; font-weight: 600; color: var(--ink-faint); padding-left: 2px; }
+  .datewrap input { padding: 10px 12px; font-size: 14px; }
+  .filter-bar { display: none; align-items: center; justify-content: space-between; margin: 4px 2px 12px; }
+  .filter-bar.show { display: flex; }
+  .filter-bar #filterCount { font-size: 12px; font-weight: 600; color: var(--ink-soft); }
+  .filter-bar button { border: none; background: transparent; color: var(--red); font-size: 13px; font-weight: 700; cursor: pointer; padding: 4px 0; }
+  .summary { display: none; gap: 18px; background: var(--surface); border-radius: var(--radius-sm); padding: 13px 16px; margin-bottom: 14px; box-shadow: var(--shadow); }
+  .summary.show { display: flex; }
+  .summary .s { flex: 1; }
+  .summary .s .k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; color: var(--ink-faint); }
+  .summary .s .v { font-size: 17px; font-weight: 700; margin-top: 2px; }
+  .summary .s.in .v { color: var(--green-text); }
+  .summary .s.out .v { color: var(--red); }
+
+  .day-group { margin-bottom: 18px; }
+  .day-label { font-size: 12px; font-weight: 700; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 2px 8px; display: flex; justify-content: space-between; }
+  .day-label .day-net { font-weight: 700; }
+
+  .item {
+    display: flex; align-items: center; gap: 12px; background: var(--surface);
+    border-radius: var(--radius-sm); padding: 13px 14px; margin-bottom: 8px; box-shadow: var(--shadow);
+  }
+  .item .dot { width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; }
+  .dot.UPI { background: #efedfb; color: var(--upi); }
+  .dot.Cash { background: #e7f3ec; color: var(--cash); }
+  .dot.Card { background: #e9f1f9; color: var(--card); }
+  .dot.Bank { background: #f8efde; color: var(--bank); }
+  .item .meta { flex: 1; min-width: 0; }
+  .item .desc { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item .sub { font-size: 12px; color: var(--ink-faint); }
+  .item .amt { font-size: 16px; font-weight: 700; white-space: nowrap; }
+  .item .amt.in { color: var(--green-text); }
+  .item .amt.out { color: var(--red); }
+  .item .del { border: none; background: transparent; color: var(--ink-faint); font-size: 18px; cursor: pointer; padding: 4px 0 4px 6px; line-height: 1; }
+  .item .del:active { color: var(--red); }
+
+  .empty { text-align: center; padding: 40px 20px; color: var(--ink-faint); }
+  .empty .big { font-size: 40px; margin-bottom: 8px; }
+  .empty p { font-size: 14px; margin: 4px 0 0; }
+
+  .toolbar { display: flex; gap: 8px; margin-top: 8px; }
+  .toolbar button {
+    flex: 1; border: 1.5px solid var(--line); background: var(--surface); border-radius: var(--radius-sm);
+    padding: 11px; font-size: 13px; font-weight: 600; color: var(--ink-soft); cursor: pointer;
+  }
+  .toolbar button:active { background: var(--bg); }
+
+  .credit { text-align: center; font-size: 12px; color: var(--ink-faint); font-weight: 500; padding: 24px 0 8px; letter-spacing: 0.02em; }
+  .toast { position: fixed; bottom: calc(20px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color: #fff; padding: 11px 20px; border-radius: 30px; font-size: 14px; font-weight: 600;
+    opacity: 0; pointer-events: none; transition: all 0.25s; z-index: 50;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <div class="brand">Daily Expense Diary<span>.</span></div>
+      <div class="tagline" data-i18n="tagline">daily money tracker</div>
+    </div>
+    <button class="lang-btn" id="langBtn" onclick="toggleLang()">தமிழ்</button>
+  </header>
+
+  <div class="balance-card">
+    <div class="lbl" data-i18n="netBalance">Net balance</div>
+    <div class="amt" id="balance">₹0</div>
+    <div class="balance-split">
+      <div class="b cash"><div class="k"><span data-i18n="cashInHand">Cash in hand</span></div><div class="v" id="balCash">₹0</div></div>
+      <div class="b bankdig"><div class="k"><span data-i18n="bankDigital">Bank / Digital</span></div><div class="v" id="balBank">₹0</div></div>
+    </div>
+    <div class="balance-flow">
+      <div class="f in"><span data-i18n="received">↓ Received</span> <b id="totalIn">₹0</b></div>
+      <div class="f out"><span data-i18n="spent">↑ Spent</span> <b id="totalOut">₹0</b></div>
+    </div>
+  </div>
+
+  <div class="add-card">
+    <div class="seg">
+      <button id="segOut" class="active out" onclick="setType('out')" data-i18n="spent">↑ Spent</button>
+      <button id="segIn" class="in" onclick="setType('in')" data-i18n="received">↓ Received</button>
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <label data-i18n="amount">Amount</label>
+        <div class="amount-input"><span>₹</span><input type="number" id="amt" inputmode="decimal" placeholder="0" min="0" step="1" /></div>
+      </div>
+      <div class="field">
+        <label data-i18n="date">Date</label>
+        <input type="date" id="date" />
+      </div>
+    </div>
+    <div class="field">
+      <label data-i18n="whatFor">What for / who</label>
+      <input type="text" id="desc" data-i18n-ph="descPh" placeholder="e.g. Groceries, Rahul paid back" />
+    </div>
+    <div class="field">
+      <label data-i18n="method">Method</label>
+      <div class="methods" id="methods">
+        <div class="m active" data-m="UPI" onclick="setMethod('UPI')">UPI</div>
+        <div class="m" data-m="Cash" onclick="setMethod('Cash')">Cash</div>
+        <div class="m" data-m="Card" onclick="setMethod('Card')">Card</div>
+        <div class="m" data-m="Bank" onclick="setMethod('Bank')">Bank</div>
+      </div>
+    </div>
+    <button class="submit out" id="submitBtn" onclick="addEntry()" data-i18n="addTxn">Add transaction</button>
+  </div>
+
+  <div class="list-head">
+    <h2 data-i18n="history">History</h2>
+  </div>
+  <div class="filters">
+    <input type="text" id="search" data-i18n-ph="searchPh" placeholder="Search…" oninput="render()" />
+    <select id="fmethod" onchange="render()">
+      <option value="" data-i18n="allMethods">All methods</option>
+      <option value="UPI">UPI</option>
+      <option value="Cash" data-i18n="cash">Cash</option>
+      <option value="Card" data-i18n="card">Card</option>
+      <option value="Bank" data-i18n="bank">Bank</option>
+    </select>
+  </div>
+  <div class="filters">
+    <select id="ftype" onchange="render()">
+      <option value="" data-i18n="inAndOut">In &amp; out</option>
+      <option value="in" data-i18n="receivedOnly">Received only</option>
+      <option value="out" data-i18n="spentOnly">Spent only</option>
+    </select>
+    <input type="number" id="fmin" inputmode="decimal" data-i18n-ph="minPh" placeholder="Min ₹" min="0" oninput="render()" />
+    <input type="number" id="fmax" inputmode="decimal" data-i18n-ph="maxPh" placeholder="Max ₹" min="0" oninput="render()" />
+  </div>
+  <div class="filters">
+    <div class="datewrap"><label data-i18n="from">From</label><input type="date" id="ffrom" onchange="render()" /></div>
+    <div class="datewrap"><label data-i18n="to">To</label><input type="date" id="fto" onchange="render()" /></div>
+  </div>
+  <div class="filter-bar" id="filterBar">
+    <span id="filterCount"></span>
+    <button id="clearFilters" onclick="clearFilters()" data-i18n="clearFilters">Clear filters</button>
+  </div>
+  <div class="summary" id="summary"></div>
+  <div id="list"></div>
+
+  <div class="toolbar">
+    <button onclick="exportData()" data-i18n="exportBackup">Export backup</button>
+    <button onclick="document.getElementById('importFile').click()" data-i18n="importBackup">Import backup</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(event)" />
+  </div>
+
+  <footer class="credit">Created by Praveen Sundararajan</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  var KEY = 'paisa_entries_v1';
+  var LANG_KEY = 'paisa_lang';
+  var entries = [];
+  var curType = 'out';
+  var curMethod = 'UPI';
+  var lang = 'en';
+
+  var I18N = {
+    en: {
+      tagline: 'daily money tracker', netBalance: 'Net balance',
+      cashInHand: 'Cash in hand', bankDigital: 'Bank / Digital',
+      received: '↓ Received', spent: '↑ Spent',
+      amount: 'Amount', date: 'Date', whatFor: 'What for / who',
+      descPh: 'e.g. Groceries, Rahul paid back', method: 'Method',
+      cash: 'Cash', card: 'Card', bank: 'Bank', addTxn: 'Add transaction',
+      history: 'History', searchPh: 'Search…', allMethods: 'All methods',
+      inAndOut: 'In & out', receivedOnly: 'Received only', spentOnly: 'Spent only',
+      minPh: 'Min ₹', maxPh: 'Max ₹', from: 'From', to: 'To',
+      clearFilters: 'Clear filters', exportBackup: 'Export backup', importBackup: 'Import backup',
+      today: 'Today', yesterday: 'Yesterday', net: 'Net',
+      receivedShort: 'Received', spentShort: 'Spent',
+      match: ' match', matches: ' matches',
+      noTxn: 'No transactions yet.<br>Add your first one above.',
+      noMatch: 'Nothing matches these filters.',
+      enterAmount: 'Enter an amount', incomeAdded: 'Income added', expenseAdded: 'Expense added',
+      deleted: 'Deleted', backupDownloaded: 'Backup downloaded', backupImported: 'Backup imported',
+      badFile: 'Could not read that file', saveFail: 'Could not save — storage full?',
+      langLabel: 'தமிழ்'
+    },
+    ta: {
+      tagline: 'தினசரி பண கணக்கு', netBalance: 'இருப்பு',
+      cashInHand: 'கையிருப்பு பணம்', bankDigital: 'வங்கி / டிஜிட்டல்',
+      received: '↓ வரவு', spent: '↑ செலவு',
+      amount: 'தொகை', date: 'தேதி', whatFor: 'எதற்கு / யாருக்கு',
+      descPh: 'எ.கா. மளிகை, ரகுல் திருப்பினார்', method: 'முறை',
+      cash: 'பணம்', card: 'அட்டை', bank: 'வங்கி', addTxn: 'பரிவர்த்தனை சேர்',
+      history: 'வரலாறு', searchPh: 'தேடு…', allMethods: 'எல்லா முறைகள்',
+      inAndOut: 'வரவு & செலவு', receivedOnly: 'வரவு மட்டும்', spentOnly: 'செலவு மட்டும்',
+      minPh: 'குறைந்த ₹', maxPh: 'அதிக ₹', from: 'முதல்', to: 'வரை',
+      clearFilters: 'வடிகட்டியை அழி', exportBackup: 'காப்பு ஏற்றுமதி', importBackup: 'காப்பு இறக்குமதி',
+      today: 'இன்று', yesterday: 'நேற்று', net: 'நிகர',
+      receivedShort: 'வரவு', spentShort: 'செலவு',
+      match: ' பொருத்தம்', matches: ' பொருத்தங்கள்',
+      noTxn: 'இன்னும் பரிவர்த்தனைகள் இல்லை.<br>மேலே முதல் பதிவைச் சேர்க்கவும்.',
+      noMatch: 'இந்த வடிகட்டிகளுக்கு எதுவும் பொருந்தவில்லை.',
+      enterAmount: 'தொகையை உள்ளிடவும்', incomeAdded: 'வரவு சேர்க்கப்பட்டது', expenseAdded: 'செலவு சேர்க்கப்பட்டது',
+      deleted: 'நீக்கப்பட்டது', backupDownloaded: 'காப்பு பதிவிறக்கப்பட்டது', backupImported: 'காப்பு இறக்குமதி செய்யப்பட்டது',
+      badFile: 'அந்த கோப்பைப் படிக்க முடியவில்லை', saveFail: 'சேமிக்க முடியவில்லை — இடம் நிரம்பியது?',
+      langLabel: 'English'
+    }
+  };
+
+  function t(key) { return (I18N[lang] && I18N[lang][key]) || I18N.en[key] || key; }
+
+  function applyLang() {
+    document.documentElement.lang = lang;
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      el.innerHTML = t(el.getAttribute('data-i18n'));
+    });
+    document.querySelectorAll('[data-i18n-ph]').forEach(function (el) {
+      el.placeholder = t(el.getAttribute('data-i18n-ph'));
+    });
+    document.getElementById('langBtn').textContent = t('langLabel');
+    render();
+  }
+
+  function toggleLang() {
+    lang = (lang === 'en') ? 'ta' : 'en';
+    try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+    applyLang();
+  }
+
+  function load() {
+    try { entries = JSON.parse(localStorage.getItem(KEY)) || []; }
+    catch (e) { entries = []; }
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(entries)); }
+    catch (e) { toast(t('saveFail')); }
+  }
+
+  function fmt(n) { return '₹' + Math.round(n).toLocaleString('en-IN'); }
+
+  function setType(t) {
+    curType = t;
+    document.getElementById('segOut').classList.toggle('active', t === 'out');
+    document.getElementById('segIn').classList.toggle('active', t === 'in');
+    var btn = document.getElementById('submitBtn');
+    btn.classList.toggle('out', t === 'out');
+    btn.classList.toggle('in', t === 'in');
+  }
+  function setMethod(m) {
+    curMethod = m;
+    document.querySelectorAll('.methods .m').forEach(function (el) {
+      el.classList.toggle('active', el.dataset.m === m);
+    });
+  }
+
+  function addEntry() {
+    var amt = parseFloat(document.getElementById('amt').value);
+    if (!amt || amt <= 0) { document.getElementById('amt').focus(); toast(t('enterAmount')); return; }
+    var desc = document.getElementById('desc').value.trim();
+    var date = document.getElementById('date').value || new Date().toISOString().slice(0, 10);
+    entries.unshift({
+      id: Date.now() + '' + Math.floor(Math.random() * 1000),
+      type: curType, amount: amt,
+      desc: desc || (curType === 'in' ? 'Received' : 'Spent'),
+      date: date, method: curMethod
+    });
+    save();
+    document.getElementById('amt').value = '';
+    document.getElementById('desc').value = '';
+    render();
+    toast(curType === 'in' ? t('incomeAdded') : t('expenseAdded'));
+  }
+
+  function delEntry(id) {
+    entries = entries.filter(function (e) { return e.id !== id; });
+    save();
+    render();
+    toast(t('deleted'));
+  }
+
+  function dayHeading(dateStr) {
+    var today = new Date(); today.setHours(0,0,0,0);
+    var d = new Date(dateStr + 'T00:00');
+    var diff = Math.round((today - d) / 86400000);
+    if (diff === 0) return t('today');
+    if (diff === 1) return t('yesterday');
+    return d.toLocaleDateString(lang === 'ta' ? 'ta-IN' : 'en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+  }
+
+  function clearFilters() {
+    document.getElementById('search').value = '';
+    document.getElementById('fmethod').value = '';
+    document.getElementById('ftype').value = '';
+    document.getElementById('fmin').value = '';
+    document.getElementById('fmax').value = '';
+    document.getElementById('ffrom').value = '';
+    document.getElementById('fto').value = '';
+    render();
+  }
+
+  function render() {
+    var totalIn = 0, totalOut = 0, cashBal = 0, bankBal = 0;
+    entries.forEach(function (e) {
+      var signed = (e.type === 'in' ? 1 : -1) * e.amount;
+      if (e.type === 'in') totalIn += e.amount; else totalOut += e.amount;
+      if (e.method === 'Cash') cashBal += signed; else bankBal += signed;
+    });
+    document.getElementById('totalIn').textContent = fmt(totalIn);
+    document.getElementById('totalOut').textContent = fmt(totalOut);
+    document.getElementById('balance').textContent = fmt(totalIn - totalOut);
+    document.getElementById('balCash').textContent = fmt(cashBal);
+    document.getElementById('balBank').textContent = fmt(bankBal);
+
+    var q = document.getElementById('search').value.toLowerCase();
+    var fm = document.getElementById('fmethod').value;
+    var ft = document.getElementById('ftype').value;
+    var fmin = parseFloat(document.getElementById('fmin').value);
+    var fmax = parseFloat(document.getElementById('fmax').value);
+    var ffrom = document.getElementById('ffrom').value;
+    var fto = document.getElementById('fto').value;
+
+    var anyFilter = q || fm || ft || !isNaN(fmin) || !isNaN(fmax) || ffrom || fto;
+
+    var filtered = entries.filter(function (e) {
+      if (q && e.desc.toLowerCase().indexOf(q) < 0) return false;
+      if (fm && e.method !== fm) return false;
+      if (ft && e.type !== ft) return false;
+      if (!isNaN(fmin) && e.amount < fmin) return false;
+      if (!isNaN(fmax) && e.amount > fmax) return false;
+      if (ffrom && e.date < ffrom) return false;
+      if (fto && e.date > fto) return false;
+      return true;
+    });
+
+    var bar = document.getElementById('filterBar');
+    var summary = document.getElementById('summary');
+    if (anyFilter) {
+      var fin = 0, fout = 0;
+      filtered.forEach(function (e) { if (e.type === 'in') fin += e.amount; else fout += e.amount; });
+      bar.classList.add('show');
+      document.getElementById('filterCount').textContent = filtered.length + (filtered.length === 1 ? t('match') : t('matches'));
+      summary.classList.add('show');
+      summary.innerHTML =
+        '<div class="s in"><div class="k">' + t('receivedShort') + '</div><div class="v">' + fmt(fin) + '</div></div>' +
+        '<div class="s out"><div class="k">' + t('spentShort') + '</div><div class="v">' + fmt(fout) + '</div></div>' +
+        '<div class="s"><div class="k">' + t('net') + '</div><div class="v">' + (fin - fout >= 0 ? '+' : '−') + fmt(Math.abs(fin - fout)) + '</div></div>';
+    } else {
+      bar.classList.remove('show');
+      summary.classList.remove('show');
+    }
+
+    var list = document.getElementById('list');
+    if (filtered.length === 0) {
+      list.innerHTML = '<div class="empty"><div class="big">🪙</div><p>' +
+        (entries.length === 0 ? t('noTxn') : t('noMatch')) + '</p></div>';
+      return;
+    }
+
+    var groups = {};
+    filtered.forEach(function (e) { (groups[e.date] = groups[e.date] || []).push(e); });
+    var dates = Object.keys(groups).sort().reverse();
+
+    var html = '';
+    dates.forEach(function (date) {
+      var items = groups[date];
+      var net = items.reduce(function (s, e) { return s + (e.type === 'in' ? e.amount : -e.amount); }, 0);
+      var netColor = net >= 0 ? 'var(--green-text)' : 'var(--red)';
+      html += '<div class="day-group"><div class="day-label"><span>' + dayHeading(date) +
+        '</span><span class="day-net" style="color:' + netColor + '">' + (net >= 0 ? '+' : '−') + fmt(Math.abs(net)) + '</span></div>';
+      items.forEach(function (e) {
+        var safeDesc = e.desc.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        html += '<div class="item">' +
+          '<div class="dot ' + e.method + '">' + e.method.charAt(0) + '</div>' +
+          '<div class="meta"><div class="desc">' + safeDesc + '</div><div class="sub">' + e.method + '</div></div>' +
+          '<div class="amt ' + e.type + '">' + (e.type === 'in' ? '+' : '−') + fmt(e.amount) + '</div>' +
+          '<button class="del" onclick="delEntry(\'' + e.id + '\')" aria-label="Delete">×</button>' +
+        '</div>';
+      });
+      html += '</div>';
+    });
+    list.innerHTML = html;
+  }
+
+  var toastTimer;
+  function toast(msg) {
+    var el = document.getElementById('toast');
+    el.textContent = msg; el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove('show'); }, 1800);
+  }
+
+  function exportData() {
+    var blob = new Blob([JSON.stringify(entries, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'expense-diary-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast(t('backupDownloaded'));
+  }
+
+  function importData(ev) {
+    var file = ev.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var data = JSON.parse(reader.result);
+        if (!Array.isArray(data)) throw new Error('bad format');
+        var existing = {};
+        entries.forEach(function (e) { existing[e.id] = true; });
+        data.forEach(function (e) { if (e && e.id && !existing[e.id]) entries.push(e); });
+        entries.sort(function (a, b) { return (b.date || '').localeCompare(a.date || ''); });
+        save(); render();
+        toast(t('backupImported'));
+      } catch (e) { toast(t('badFile')); }
+    };
+    reader.readAsText(file);
+    ev.target.value = '';
+  }
+
+  try { lang = localStorage.getItem(LANG_KEY) || 'en'; } catch (e) { lang = 'en'; }
+  document.getElementById('date').value = new Date().toISOString().slice(0, 10);
+  load();
+  applyLang();
+
+</script>
+</body>
+</html>
