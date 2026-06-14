@@ -70,6 +70,10 @@
   .login-btn:active { opacity: 0.9; }
   .login-err { color: var(--red); font-size: 13px; font-weight: 600; min-height: 18px; margin-bottom: 6px; }
   .login-hint { text-align: center; font-size: 12px; color: var(--ink-faint); margin-top: 14px; }
+  .login-ok { color: var(--green-text); font-size: 13px; font-weight: 600; min-height: 0; margin-bottom: 6px; }
+  .login-toggle { text-align: center; font-size: 13px; color: var(--ink-soft); margin-top: 16px; }
+  .login-toggle a { color: var(--green-text); font-weight: 700; text-decoration: none; margin-left: 5px; }
+  .login-toggle a:hover { text-decoration: underline; }
   .brand { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; color: var(--green); }
   .brand span { color: var(--accent); }
   .tagline { font-size: 12px; color: var(--ink-faint); font-weight: 500; }
@@ -211,12 +215,16 @@
 <div class="login-overlay" id="loginOverlay" style="display:none">
   <div class="login-box">
     <div class="brand" style="font-size:24px;margin-bottom:2px;">Daily Expense Diary<span>.</span></div>
-    <div class="login-sub" id="loginSub" data-i18n="loginSub">Sign in to your shop book</div>
+    <div class="login-sub" id="loginSub" data-i18n="loginSub">Sign in to your book</div>
     <input type="email" id="loginEmail" data-i18n-ph="emailPh" placeholder="Email" autocomplete="username" />
     <input type="password" id="loginPass" data-i18n-ph="passPh" placeholder="Password" autocomplete="current-password" />
     <div class="login-err" id="loginErr"></div>
-    <button class="login-btn" id="loginBtn" onclick="doLogin()" data-i18n="signIn">Sign in</button>
-    <div class="login-hint" id="loginHint" data-i18n="loginHint">Ask the shop owner for your login.</div>
+    <div class="login-ok" id="loginOk"></div>
+    <button class="login-btn" id="loginBtn" onclick="submitAuth()" data-i18n="signIn">Sign in</button>
+    <div class="login-toggle">
+      <span id="toggleText" data-i18n="noAccount">No account yet?</span>
+      <a href="#" id="toggleLink" onclick="toggleAuthMode(event)" data-i18n="createOne">Create one</a>
+    </div>
   </div>
 </div>
 <div class="app">
@@ -329,7 +337,7 @@
   //  SHARED SYNC SETUP  —  paste your two Supabase values below
   //  (Get these from supabase.com -> your project -> Settings -> API)
   // ============================================================
- var SUPABASE_URL = 'https://dqzfhebkipnxwdhhqzgl.supabase.co';
+  var SUPABASE_URL = 'https://dqzfhebkipnxwdhhqzgl.supabase.co';
   var SUPABASE_KEY = 'sb_publishable_-3D9zymTmZi4mKjeJ8PeAA_bMtwRe0l';
   // ============================================================
 
@@ -342,6 +350,8 @@
   var sb = null;          // Supabase client (null until configured)
   var syncOn = false;     // true when cloud sync is active
   var curSyncState = 'offline';
+  var currentUser = null; // signed-in user's id
+  var authMode = 'login'; // 'login' or 'signup'
 
   var I18N = {
     en: {
@@ -367,9 +377,14 @@
       badFile: 'Could not read that file', saveFail: 'Could not save — storage full?',
       langLabel: 'தமிழ்',
       syncSynced: '● Synced', syncConnecting: '○ Connecting…', syncError: '● Sync error', syncOffline: '● This device only',
-      loginSub: 'Sign in to your shop book', emailPh: 'Email', passPh: 'Password', signIn: 'Sign in',
+      loginSub: 'Sign in to your book', emailPh: 'Email', passPh: 'Password', signIn: 'Sign in',
       signingIn: 'Signing in…', signOut: 'Sign out', loginHint: 'Ask the shop owner for your login.',
-      loginNeed: 'Enter email and password', loginFail: 'Wrong email or password'
+      loginNeed: 'Enter email and password', loginFail: 'Wrong email or password',
+      noAccount: 'No account yet?', createOne: 'Create one', haveAccount: 'Already have an account?',
+      signInLink: 'Sign in', signupSub: 'Create your own private book', createAccount: 'Create account',
+      creating: 'Creating…', checkEmail: 'Check your email to confirm, then sign in.',
+      emailTaken: 'That email is already registered', passShort: 'Password must be at least 6 characters',
+      confirmFirst: 'Please confirm your email first (check inbox)'
     },
     ta: {
       tagline: 'தினசரி பண கணக்கு', netBalance: 'இருப்பு',
@@ -394,9 +409,14 @@
       badFile: 'அந்த கோப்பைப் படிக்க முடியவில்லை', saveFail: 'சேமிக்க முடியவில்லை — இடம் நிரம்பியது?',
       langLabel: 'English',
       syncSynced: '● ஒத்திசைக்கப்பட்டது', syncConnecting: '○ இணைக்கிறது…', syncError: '● ஒத்திசைவு பிழை', syncOffline: '● இந்த சாதனம் மட்டும்',
-      loginSub: 'உங்கள் கடை கணக்கில் உள்நுழையவும்', emailPh: 'மின்னஞ்சல்', passPh: 'கடவுச்சொல்', signIn: 'உள்நுழை',
+      loginSub: 'உங்கள் கணக்கில் உள்நுழையவும்', emailPh: 'மின்னஞ்சல்', passPh: 'கடவுச்சொல்', signIn: 'உள்நுழை',
       signingIn: 'உள்நுழைகிறது…', signOut: 'வெளியேறு', loginHint: 'உங்கள் உள்நுழைவுக்கு கடை உரிமையாளரிடம் கேளுங்கள்.',
-      loginNeed: 'மின்னஞ்சல் மற்றும் கடவுச்சொல்லை உள்ளிடவும்', loginFail: 'தவறான மின்னஞ்சல் அல்லது கடவுச்சொல்'
+      loginNeed: 'மின்னஞ்சல் மற்றும் கடவுச்சொல்லை உள்ளிடவும்', loginFail: 'தவறான மின்னஞ்சல் அல்லது கடவுச்சொல்',
+      noAccount: 'கணக்கு இல்லையா?', createOne: 'உருவாக்கு', haveAccount: 'ஏற்கனவே கணக்கு உள்ளதா?',
+      signInLink: 'உள்நுழை', signupSub: 'உங்கள் சொந்த கணக்கை உருவாக்கவும்', createAccount: 'கணக்கை உருவாக்கு',
+      creating: 'உருவாக்குகிறது…', checkEmail: 'உறுதிப்படுத்த மின்னஞ்சலைப் பார்க்கவும், பின் உள்நுழையவும்.',
+      emailTaken: 'அந்த மின்னஞ்சல் ஏற்கனவே பதிவு செய்யப்பட்டுள்ளது', passShort: 'கடவுச்சொல் குறைந்தது 6 எழுத்துகள் இருக்க வேண்டும்',
+      confirmFirst: 'முதலில் உங்கள் மின்னஞ்சலை உறுதிப்படுத்தவும் (இன்பாக்ஸைப் பார்க்கவும்)'
     }
   };
 
@@ -438,25 +458,30 @@
     } catch (e) { sb = null; setSyncBadge('offline'); return; }
     // Check if already signed in (session persists across visits)
     sb.auth.getSession().then(function (res) {
-      if (res.data && res.data.session) { onSignedIn(); }
+      if (res.data && res.data.session) { onSignedIn(res.data.session); }
       else { showLogin(); }
     });
     // React to future auth changes
     sb.auth.onAuthStateChange(function (event, session) {
-      if (session) { onSignedIn(); } else { showLogin(); }
+      if (session) { onSignedIn(session); } else { showLogin(); }
     });
   }
 
   function showLogin() {
     syncOn = false;
+    currentUser = null;
     setSyncBadge('offline');
     document.getElementById('loginOverlay').style.display = 'flex';
     document.getElementById('signoutBtn').style.display = 'none';
   }
 
-  function onSignedIn() {
+  function onSignedIn(session) {
+    currentUser = session && session.user ? session.user.id : null;
     document.getElementById('loginOverlay').style.display = 'none';
     document.getElementById('signoutBtn').style.display = '';
+    document.getElementById('loginErr').textContent = '';
+    document.getElementById('loginOk').textContent = '';
+    document.getElementById('loginPass').value = '';
     syncOn = true;
     setSyncBadge('connecting');
     cloudLoad();
@@ -467,19 +492,77 @@
     }
   }
 
+  function toggleAuthMode(e) {
+    if (e) e.preventDefault();
+    authMode = (authMode === 'login') ? 'signup' : 'login';
+    document.getElementById('loginErr').textContent = '';
+    document.getElementById('loginOk').textContent = '';
+    var btn = document.getElementById('loginBtn');
+    if (authMode === 'signup') {
+      document.getElementById('loginSub').textContent = t('signupSub');
+      btn.textContent = t('createAccount');
+      document.getElementById('toggleText').textContent = t('haveAccount');
+      document.getElementById('toggleLink').textContent = t('signInLink');
+      document.getElementById('loginPass').setAttribute('autocomplete', 'new-password');
+    } else {
+      document.getElementById('loginSub').textContent = t('loginSub');
+      btn.textContent = t('signIn');
+      document.getElementById('toggleText').textContent = t('noAccount');
+      document.getElementById('toggleLink').textContent = t('createOne');
+      document.getElementById('loginPass').setAttribute('autocomplete', 'current-password');
+    }
+  }
+
+  function submitAuth() {
+    if (authMode === 'signup') { doSignup(); } else { doLogin(); }
+  }
+
   function doLogin() {
     if (!sb) return;
     var email = document.getElementById('loginEmail').value.trim();
     var pass = document.getElementById('loginPass').value;
     var errEl = document.getElementById('loginErr');
-    errEl.textContent = '';
+    var okEl = document.getElementById('loginOk');
+    errEl.textContent = ''; okEl.textContent = '';
     if (!email || !pass) { errEl.textContent = t('loginNeed'); return; }
     var btn = document.getElementById('loginBtn');
     btn.disabled = true; btn.textContent = t('signingIn');
     sb.auth.signInWithPassword({ email: email, password: pass }).then(function (res) {
       btn.disabled = false; btn.textContent = t('signIn');
-      if (res.error) { errEl.textContent = t('loginFail'); }
-      else { document.getElementById('loginPass').value = ''; }
+      if (res.error) {
+        // a common cause is unconfirmed email
+        if (/confirm/i.test(res.error.message || '')) { errEl.textContent = t('confirmFirst'); }
+        else { errEl.textContent = t('loginFail'); }
+      }
+    });
+  }
+
+  function doSignup() {
+    if (!sb) return;
+    var email = document.getElementById('loginEmail').value.trim();
+    var pass = document.getElementById('loginPass').value;
+    var errEl = document.getElementById('loginErr');
+    var okEl = document.getElementById('loginOk');
+    errEl.textContent = ''; okEl.textContent = '';
+    if (!email || !pass) { errEl.textContent = t('loginNeed'); return; }
+    if (pass.length < 6) { errEl.textContent = t('passShort'); return; }
+    var btn = document.getElementById('loginBtn');
+    btn.disabled = true; btn.textContent = t('creating');
+    sb.auth.signUp({ email: email, password: pass }).then(function (res) {
+      btn.disabled = false; btn.textContent = t('createAccount');
+      if (res.error) {
+        if (/already|registered|exists/i.test(res.error.message || '')) { errEl.textContent = t('emailTaken'); }
+        else { errEl.textContent = (res.error.message || t('loginFail')); }
+        return;
+      }
+      // With email confirmation ON, no session is returned yet.
+      if (res.data && res.data.session) {
+        // (confirmation off) signed in immediately
+      } else {
+        okEl.textContent = t('checkEmail');
+        toggleAuthMode(); // flip back to login view so they sign in after confirming
+        document.getElementById('loginOk').textContent = t('checkEmail');
+      }
     });
   }
 
@@ -553,7 +636,8 @@
     if (syncOn) {
       // optimistic: show immediately, then write to cloud
       entries.unshift(rec); saveLocal(); render();
-      sb.from('entries').insert([rec]).then(function (res) {
+      var cloudRec = { id: rec.id, type: rec.type, amount: rec.amount, desc: rec.desc, date: rec.date, method: rec.method, user_id: currentUser };
+      sb.from('entries').insert([cloudRec]).then(function (res) {
         if (res.error) { toast(t('syncError')); }
         else { toast(curType === 'in' ? t('incomeAdded') : t('expenseAdded')); cloudLoad(); }
       });
@@ -843,7 +927,7 @@
         saveLocal(); render();
         if (syncOn && toAdd.length) {
           var clean = toAdd.map(function (e) {
-            return { id: String(e.id), type: e.type, amount: Number(e.amount), desc: e.desc, date: e.date, method: e.method };
+            return { id: String(e.id), type: e.type, amount: Number(e.amount), desc: e.desc, date: e.date, method: e.method, user_id: currentUser };
           });
           sb.from('entries').insert(clean).then(function (res) {
             if (res.error) { toast(t('syncError')); } else { toast(t('backupImported')); cloudLoad(); }
@@ -860,7 +944,7 @@
   try { lang = localStorage.getItem(LANG_KEY) || 'en'; } catch (e) { lang = 'en'; }
   document.getElementById('date').value = new Date().toISOString().slice(0, 10);
   var passEl = document.getElementById('loginPass');
-  if (passEl) passEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') doLogin(); });
+  if (passEl) passEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') submitAuth(); });
   loadLocal();
   applyLang();
   initSync();
