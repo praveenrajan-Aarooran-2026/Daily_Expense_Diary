@@ -59,6 +59,17 @@
   .sync-badge.wait { background: #fff3d6; color: #9a6b00; }
   .sync-badge.err { background: var(--red-soft); color: var(--red); }
   .sync-badge.off { background: #eceae3; color: var(--ink-faint); }
+  .header-btns { display: flex; gap: 8px; align-items: flex-start; }
+  .signout-btn { color: var(--red) !important; }
+  .login-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .login-box { width: 100%; max-width: 360px; background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px 24px; }
+  .login-sub { font-size: 14px; color: var(--ink-soft); margin-bottom: 20px; }
+  .login-box input { width: 100%; border: 1.5px solid var(--line); border-radius: var(--radius-sm); padding: 13px; font-size: 16px; margin-bottom: 12px; outline: none; }
+  .login-box input:focus { border-color: var(--green); }
+  .login-btn { width: 100%; border: none; background: var(--green); color: #fff; border-radius: var(--radius-sm); padding: 14px; font-size: 16px; font-weight: 700; cursor: pointer; }
+  .login-btn:active { opacity: 0.9; }
+  .login-err { color: var(--red); font-size: 13px; font-weight: 600; min-height: 18px; margin-bottom: 6px; }
+  .login-hint { text-align: center; font-size: 12px; color: var(--ink-faint); margin-top: 14px; }
   .brand { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; color: var(--green); }
   .brand span { color: var(--accent); }
   .tagline { font-size: 12px; color: var(--ink-faint); font-weight: 500; }
@@ -197,6 +208,17 @@
 </style>
 </head>
 <body>
+<div class="login-overlay" id="loginOverlay" style="display:none">
+  <div class="login-box">
+    <div class="brand" style="font-size:24px;margin-bottom:2px;">Daily Expense Diary<span>.</span></div>
+    <div class="login-sub" id="loginSub" data-i18n="loginSub">Sign in to your shop book</div>
+    <input type="email" id="loginEmail" data-i18n-ph="emailPh" placeholder="Email" autocomplete="username" />
+    <input type="password" id="loginPass" data-i18n-ph="passPh" placeholder="Password" autocomplete="current-password" />
+    <div class="login-err" id="loginErr"></div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()" data-i18n="signIn">Sign in</button>
+    <div class="login-hint" id="loginHint" data-i18n="loginHint">Ask the shop owner for your login.</div>
+  </div>
+</div>
 <div class="app">
   <header>
     <div>
@@ -204,7 +226,10 @@
       <div class="tagline" data-i18n="tagline">daily money tracker</div>
       <div class="sync-badge off" id="syncBadge"></div>
     </div>
-    <button class="lang-btn" id="langBtn" onclick="toggleLang()">தமிழ்</button>
+    <div class="header-btns">
+      <button class="lang-btn" id="langBtn" onclick="toggleLang()">தமிழ்</button>
+      <button class="lang-btn signout-btn" id="signoutBtn" onclick="doLogout()" style="display:none" data-i18n="signOut">Sign out</button>
+    </div>
   </header>
 
   <div class="balance-card">
@@ -304,8 +329,8 @@
   //  SHARED SYNC SETUP  —  paste your two Supabase values below
   //  (Get these from supabase.com -> your project -> Settings -> API)
   // ============================================================
-  var SUPABASE_URL = 'https://dqzfhebkipnxwdhhqzgl.supabase.co';
-  var SUPABASE_KEY = 'sb_publishable_E8R1k9wGdAkdyAlEKvjh0A_PzFeLlQh';
+  var SUPABASE_URL = 'PASTE_YOUR_PROJECT_URL_HERE';
+  var SUPABASE_KEY = 'PASTE_YOUR_ANON_PUBLIC_KEY_HERE';
   // ============================================================
 
   var KEY = 'paisa_entries_v1';
@@ -341,7 +366,10 @@
       deleted: 'Deleted', backupDownloaded: 'Backup downloaded', backupImported: 'Backup imported',
       badFile: 'Could not read that file', saveFail: 'Could not save — storage full?',
       langLabel: 'தமிழ்',
-      syncSynced: '● Synced', syncConnecting: '○ Connecting…', syncError: '● Sync error', syncOffline: '● This device only'
+      syncSynced: '● Synced', syncConnecting: '○ Connecting…', syncError: '● Sync error', syncOffline: '● This device only',
+      loginSub: 'Sign in to your shop book', emailPh: 'Email', passPh: 'Password', signIn: 'Sign in',
+      signingIn: 'Signing in…', signOut: 'Sign out', loginHint: 'Ask the shop owner for your login.',
+      loginNeed: 'Enter email and password', loginFail: 'Wrong email or password'
     },
     ta: {
       tagline: 'தினசரி பண கணக்கு', netBalance: 'இருப்பு',
@@ -365,7 +393,10 @@
       deleted: 'நீக்கப்பட்டது', backupDownloaded: 'காப்பு பதிவிறக்கப்பட்டது', backupImported: 'காப்பு இறக்குமதி செய்யப்பட்டது',
       badFile: 'அந்த கோப்பைப் படிக்க முடியவில்லை', saveFail: 'சேமிக்க முடியவில்லை — இடம் நிரம்பியது?',
       langLabel: 'English',
-      syncSynced: '● ஒத்திசைக்கப்பட்டது', syncConnecting: '○ இணைக்கிறது…', syncError: '● ஒத்திசைவு பிழை', syncOffline: '● இந்த சாதனம் மட்டும்'
+      syncSynced: '● ஒத்திசைக்கப்பட்டது', syncConnecting: '○ இணைக்கிறது…', syncError: '● ஒத்திசைவு பிழை', syncOffline: '● இந்த சாதனம் மட்டும்',
+      loginSub: 'உங்கள் கடை கணக்கில் உள்நுழையவும்', emailPh: 'மின்னஞ்சல்', passPh: 'கடவுச்சொல்', signIn: 'உள்நுழை',
+      signingIn: 'உள்நுழைகிறது…', signOut: 'வெளியேறு', loginHint: 'உங்கள் உள்நுழைவுக்கு கடை உரிமையாளரிடம் கேளுங்கள்.',
+      loginNeed: 'மின்னஞ்சல் மற்றும் கடவுச்சொல்லை உள்ளிடவும்', loginFail: 'தவறான மின்னஞ்சல் அல்லது கடவுச்சொல்'
     }
   };
 
@@ -404,14 +435,60 @@
     if (!configured) { setSyncBadge('offline'); return; }
     try {
       sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      syncOn = true;
-      setSyncBadge('connecting');
-      cloudLoad();
-      // live updates: refresh whenever anyone changes the shared table
-      sb.channel('entries-changes')
+    } catch (e) { sb = null; setSyncBadge('offline'); return; }
+    // Check if already signed in (session persists across visits)
+    sb.auth.getSession().then(function (res) {
+      if (res.data && res.data.session) { onSignedIn(); }
+      else { showLogin(); }
+    });
+    // React to future auth changes
+    sb.auth.onAuthStateChange(function (event, session) {
+      if (session) { onSignedIn(); } else { showLogin(); }
+    });
+  }
+
+  function showLogin() {
+    syncOn = false;
+    setSyncBadge('offline');
+    document.getElementById('loginOverlay').style.display = 'flex';
+    document.getElementById('signoutBtn').style.display = 'none';
+  }
+
+  function onSignedIn() {
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('signoutBtn').style.display = '';
+    syncOn = true;
+    setSyncBadge('connecting');
+    cloudLoad();
+    if (!window._sub) {
+      window._sub = sb.channel('entries-changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'entries' }, function () { cloudLoad(); })
         .subscribe();
-    } catch (e) { syncOn = false; setSyncBadge('offline'); }
+    }
+  }
+
+  function doLogin() {
+    if (!sb) return;
+    var email = document.getElementById('loginEmail').value.trim();
+    var pass = document.getElementById('loginPass').value;
+    var errEl = document.getElementById('loginErr');
+    errEl.textContent = '';
+    if (!email || !pass) { errEl.textContent = t('loginNeed'); return; }
+    var btn = document.getElementById('loginBtn');
+    btn.disabled = true; btn.textContent = t('signingIn');
+    sb.auth.signInWithPassword({ email: email, password: pass }).then(function (res) {
+      btn.disabled = false; btn.textContent = t('signIn');
+      if (res.error) { errEl.textContent = t('loginFail'); }
+      else { document.getElementById('loginPass').value = ''; }
+    });
+  }
+
+  function doLogout() {
+    if (!sb) return;
+    sb.auth.signOut().then(function () {
+      entries = []; saveLocal(); render();
+      showLogin();
+    });
   }
 
   function cloudLoad() {
@@ -782,6 +859,8 @@
 
   try { lang = localStorage.getItem(LANG_KEY) || 'en'; } catch (e) { lang = 'en'; }
   document.getElementById('date').value = new Date().toISOString().slice(0, 10);
+  var passEl = document.getElementById('loginPass');
+  if (passEl) passEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') doLogin(); });
   loadLocal();
   applyLang();
   initSync();
