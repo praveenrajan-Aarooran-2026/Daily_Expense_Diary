@@ -134,6 +134,15 @@
   .login-err { color: var(--red); font-size: 13px; font-weight: 600; min-height: 18px; margin-bottom: 6px; }
   .login-hint { text-align: center; font-size: 12px; color: var(--ink-faint); margin-top: 14px; }
   .login-ok { color: var(--green-text); font-size: 13px; font-weight: 600; min-height: 0; margin-bottom: 6px; }
+  .pw-hint { font-size: 12px; font-weight: 600; margin: -6px 2px 10px; line-height: 1.5; }
+  .pw-hint .req { display: inline-block; margin-right: 10px; color: var(--ink-faint); }
+  .pw-hint .req.met { color: var(--green-text); }
+  .pw-match { font-size: 12px; font-weight: 700; margin: -6px 2px 10px; }
+  .pw-match.ok { color: var(--green-text); }
+  .pw-match.no { color: var(--red); }
+  .otp-info { font-size: 13px; color: var(--ink-soft); margin-bottom: 14px; line-height: 1.5; }
+  #otpCode { width: 100%; border: 1.5px solid var(--line); border-radius: var(--radius-sm); padding: 14px; font-size: 24px; font-weight: 800; text-align: center; letter-spacing: 8px; margin-bottom: 12px; outline: none; }
+  #otpCode:focus { border-color: var(--green); }
   .login-toggle { text-align: center; font-size: 13px; color: var(--ink-soft); margin-top: 16px; }
   .login-toggle a { color: var(--green-text); font-weight: 700; text-decoration: none; margin-left: 5px; }
   .login-toggle a:hover { text-decoration: underline; }
@@ -281,15 +290,31 @@
     <div class="brand" style="font-size:24px;margin-bottom:2px;">Daily Expense Diary<span>.</span></div>
     <div class="mode-badge" id="modeBadge" data-i18n="signInMode">SIGN IN</div>
     <div class="login-sub" id="loginSub" data-i18n="loginSub">Sign in to your book</div>
-    <input type="email" id="loginEmail" data-i18n-ph="emailPh" placeholder="Email" autocomplete="username" />
-    <input type="password" id="loginPass" data-i18n-ph="passPh" placeholder="Password" autocomplete="current-password" />
-    <input type="password" id="loginPass2" data-i18n-ph="passPh2" placeholder="Confirm password" autocomplete="new-password" style="display:none" />
-    <div class="login-err" id="loginErr"></div>
-    <div class="login-ok" id="loginOk"></div>
-    <button class="login-btn" id="loginBtn" onclick="submitAuth()" data-i18n="signIn">Sign in</button>
-    <div class="login-toggle">
-      <span id="toggleText" data-i18n="noAccount">No account yet?</span>
-      <a href="#" id="toggleLink" onclick="toggleAuthMode(event)" data-i18n="createOne">Create one</a>
+    <div id="authForm">
+      <input type="email" id="loginEmail" data-i18n-ph="emailPh" placeholder="Email" autocomplete="username" />
+      <input type="password" id="loginPass" data-i18n-ph="passPh" placeholder="Password" autocomplete="current-password" oninput="onPassInput()" />
+      <div class="pw-hint" id="pwHint" style="display:none"></div>
+      <input type="password" id="loginPass2" data-i18n-ph="passPh2" placeholder="Confirm password" autocomplete="new-password" oninput="onPass2Input()" style="display:none" />
+      <div class="pw-match" id="pwMatch" style="display:none"></div>
+      <div class="login-err" id="loginErr"></div>
+      <div class="login-ok" id="loginOk"></div>
+      <button class="login-btn" id="loginBtn" onclick="submitAuth()" data-i18n="signIn">Sign in</button>
+      <div class="login-toggle">
+        <span id="toggleText" data-i18n="noAccount">No account yet?</span>
+        <a href="#" id="toggleLink" onclick="toggleAuthMode(event)" data-i18n="createOne">Create one</a>
+      </div>
+    </div>
+    <div id="otpForm" style="display:none">
+      <div class="otp-info" id="otpInfo" data-i18n="otpInfo">We emailed you a 6-digit code. Enter it below.</div>
+      <input type="text" id="otpCode" inputmode="numeric" maxlength="6" data-i18n-ph="otpPh" placeholder="6-digit code" autocomplete="one-time-code" />
+      <div class="login-err" id="otpErr"></div>
+      <div class="login-ok" id="otpOk"></div>
+      <button class="login-btn" id="otpBtn" onclick="verifyOtp()" data-i18n="verifyCode">Verify &amp; finish</button>
+      <div class="login-toggle">
+        <a href="#" id="otpResend" onclick="resendOtp(event)" data-i18n="resendCode">Resend code</a>
+        <span style="margin:0 6px;color:var(--ink-faint)">·</span>
+        <a href="#" id="otpBack" onclick="otpBack(event)" data-i18n="backToSignup">Back</a>
+      </div>
     </div>
   </div>
 </div>
@@ -452,7 +477,14 @@
       emailTaken: 'That email is already registered', passShort: 'Password must be at least 6 characters',
       confirmFirst: 'Please confirm your email first (check inbox)',
       passPh2: 'Confirm password', passMismatch: 'Passwords do not match',
-      signInMode: 'SIGN IN', signUpMode: 'SIGN UP'
+      signInMode: 'SIGN IN', signUpMode: 'SIGN UP',
+      ruleLen: '6+ chars', ruleUpper: 'A-Z', ruleLower: 'a-z', ruleNum: '0-9', ruleSym: 'symbol',
+      pwMatchOk: '✓ Passwords match', pwMatchNo: '✗ Passwords do not match',
+      passWeak: 'Use upper, lower, number & symbol (6+ chars)',
+      otpSub: 'Verify your email', verifyMode: 'VERIFY', otpInfo: 'We emailed you a 6-digit code. Enter it below.',
+      otpPh: '6-digit code', verifyCode: 'Verify & finish', verifying: 'Verifying…',
+      otpNeed: 'Enter the 6-digit code', otpWrong: 'Incorrect or expired code',
+      resendCode: 'Resend code', backToSignup: 'Back', otpResent: 'A new code was sent', otpResendFail: 'Could not resend, try later'
     },
     ta: {
       tagline: 'தினசரி பண கணக்கு', netBalance: 'இருப்பு',
@@ -486,7 +518,14 @@
       emailTaken: 'அந்த மின்னஞ்சல் ஏற்கனவே பதிவு செய்யப்பட்டுள்ளது', passShort: 'கடவுச்சொல் குறைந்தது 6 எழுத்துகள் இருக்க வேண்டும்',
       confirmFirst: 'முதலில் உங்கள் மின்னஞ்சலை உறுதிப்படுத்தவும் (இன்பாக்ஸைப் பார்க்கவும்)',
       passPh2: 'கடவுச்சொல்லை உறுதிப்படுத்தவும்', passMismatch: 'கடவுச்சொற்கள் பொருந்தவில்லை',
-      signInMode: 'உள்நுழைவு', signUpMode: 'பதிவு'
+      signInMode: 'உள்நுழைவு', signUpMode: 'பதிவு',
+      ruleLen: '6+ எழுத்து', ruleUpper: 'A-Z', ruleLower: 'a-z', ruleNum: '0-9', ruleSym: 'குறி',
+      pwMatchOk: '✓ கடவுச்சொற்கள் பொருந்துகின்றன', pwMatchNo: '✗ கடவுச்சொற்கள் பொருந்தவில்லை',
+      passWeak: 'பெரிய, சிறிய எழுத்து, எண் & குறி பயன்படுத்தவும் (6+)',
+      otpSub: 'உங்கள் மின்னஞ்சலை சரிபார்க்கவும்', verifyMode: 'சரிபார்', otpInfo: 'உங்களுக்கு 6 இலக்க குறியீட்டை மின்னஞ்சல் செய்துள்ளோம். கீழே உள்ளிடவும்.',
+      otpPh: '6 இலக்க குறியீடு', verifyCode: 'சரிபார்த்து முடி', verifying: 'சரிபார்க்கிறது…',
+      otpNeed: '6 இலக்க குறியீட்டை உள்ளிடவும்', otpWrong: 'தவறான அல்லது காலாவதியான குறியீடு',
+      resendCode: 'மீண்டும் அனுப்பு', backToSignup: 'பின்', otpResent: 'புதிய குறியீடு அனுப்பப்பட்டது', otpResendFail: 'மீண்டும் அனுப்ப முடியவில்லை, பின் முயற்சிக்கவும்'
     }
   };
 
@@ -593,18 +632,28 @@
   function showLogin() {
     syncOn = false;
     currentUser = null;
+    pendingEmail = '';
     setSyncBadge('offline');
     document.getElementById('loginOverlay').style.display = 'flex';
     document.getElementById('signoutBtn').style.display = 'none';
+    // make sure we show the normal auth form, not a stale OTP screen
+    var af = document.getElementById('authForm'), of = document.getElementById('otpForm');
+    if (af && of) { af.style.display = ''; of.style.display = 'none'; }
+    if (typeof applyAuthModeUI === 'function') applyAuthModeUI();
   }
 
   function onSignedIn(session) {
     currentUser = session && session.user ? session.user.id : null;
+    pendingEmail = '';
     document.getElementById('loginOverlay').style.display = 'none';
     document.getElementById('signoutBtn').style.display = '';
     document.getElementById('loginErr').textContent = '';
     document.getElementById('loginOk').textContent = '';
     document.getElementById('loginPass').value = '';
+    document.getElementById('loginPass2').value = '';
+    document.getElementById('otpCode').value = '';
+    document.getElementById('otpForm').style.display = 'none';
+    document.getElementById('authForm').style.display = '';
     syncOn = true;
     setSyncBadge('connecting');
     cloudLoad();
@@ -614,6 +663,44 @@
         .subscribe();
     }
   }
+
+  function checkPassRules(pw) {
+    return {
+      len: pw.length >= 6,
+      upper: /[A-Z]/.test(pw),
+      lower: /[a-z]/.test(pw),
+      num: /[0-9]/.test(pw),
+      sym: /[^A-Za-z0-9]/.test(pw),
+      all: function () { return this.len && this.upper && this.lower && this.num && this.sym; }
+    };
+  }
+
+  function onPassInput() {
+    if (authMode !== 'signup') return;
+    var pw = document.getElementById('loginPass').value;
+    var hint = document.getElementById('pwHint');
+    if (!pw) { hint.style.display = 'none'; onPass2Input(); return; }
+    var r = checkPassRules(pw);
+    function chip(ok, label) { return '<span class="req' + (ok ? ' met' : '') + '">' + (ok ? '✓' : '•') + ' ' + label + '</span>'; }
+    hint.style.display = 'block';
+    hint.innerHTML =
+      chip(r.len, t('ruleLen')) + chip(r.upper, t('ruleUpper')) +
+      chip(r.lower, t('ruleLower')) + chip(r.num, t('ruleNum')) + chip(r.sym, t('ruleSym'));
+    onPass2Input();
+  }
+
+  function onPass2Input() {
+    if (authMode !== 'signup') return;
+    var pw = document.getElementById('loginPass').value;
+    var pw2 = document.getElementById('loginPass2').value;
+    var m = document.getElementById('pwMatch');
+    if (!pw2) { m.style.display = 'none'; return; }
+    m.style.display = 'block';
+    if (pw === pw2) { m.textContent = t('pwMatchOk'); m.className = 'pw-match ok'; }
+    else { m.textContent = t('pwMatchNo'); m.className = 'pw-match no'; }
+  }
+
+  function checkPassRules2() { /* placeholder to keep structure clear */ }
 
   function toggleAuthMode(e) {
     if (e) e.preventDefault();
@@ -628,6 +715,8 @@
     var btn = document.getElementById('loginBtn');
     var badge = document.getElementById('modeBadge');
     var pass2 = document.getElementById('loginPass2');
+    var hint = document.getElementById('pwHint');
+    var match = document.getElementById('pwMatch');
     if (authMode === 'signup') {
       document.getElementById('loginSub').textContent = t('signupSub');
       btn.textContent = t('createAccount');
@@ -637,6 +726,7 @@
       pass2.style.display = '';
       badge.textContent = t('signUpMode');
       badge.className = 'mode-badge signup';
+      onPassInput();
     } else {
       document.getElementById('loginSub').textContent = t('loginSub');
       btn.textContent = t('signIn');
@@ -646,6 +736,8 @@
       pass2.style.display = 'none';
       badge.textContent = t('signInMode');
       badge.className = 'mode-badge signin';
+      if (hint) hint.style.display = 'none';
+      if (match) match.style.display = 'none';
     }
   }
 
@@ -673,6 +765,8 @@
     });
   }
 
+  var pendingEmail = '';   // email awaiting OTP verification
+
   function doSignup() {
     if (!sb) return;
     var email = document.getElementById('loginEmail').value.trim();
@@ -682,7 +776,8 @@
     var okEl = document.getElementById('loginOk');
     errEl.textContent = ''; okEl.textContent = '';
     if (!email || !pass) { errEl.textContent = t('loginNeed'); return; }
-    if (pass.length < 6) { errEl.textContent = t('passShort'); return; }
+    var r = checkPassRules(pass);
+    if (!r.all()) { errEl.textContent = t('passWeak'); return; }
     if (pass !== pass2) { errEl.textContent = t('passMismatch'); return; }
     var btn = document.getElementById('loginBtn');
     btn.disabled = true; btn.textContent = t('creating');
@@ -693,14 +788,62 @@
         else { errEl.textContent = (res.error.message || t('loginFail')); }
         return;
       }
-      // With email confirmation ON, no session is returned yet.
       if (res.data && res.data.session) {
-        // (confirmation off) signed in immediately
-      } else {
-        okEl.textContent = t('checkEmail');
-        toggleAuthMode(); // flip back to login view so they sign in after confirming
-        document.getElementById('loginOk').textContent = t('checkEmail');
+        // confirmation disabled in Supabase -> already signed in, no OTP needed
+        return;
       }
+      // OTP confirmation: a 6-digit code was emailed. Show the code screen.
+      pendingEmail = email;
+      showOtpForm();
+    });
+  }
+
+  function showOtpForm() {
+    document.getElementById('authForm').style.display = 'none';
+    document.getElementById('otpForm').style.display = '';
+    document.getElementById('loginSub').textContent = t('otpSub');
+    document.getElementById('modeBadge').textContent = t('verifyMode');
+    document.getElementById('modeBadge').className = 'mode-badge signup';
+    document.getElementById('otpErr').textContent = '';
+    document.getElementById('otpOk').textContent = '';
+    document.getElementById('otpCode').value = '';
+    document.getElementById('otpCode').focus();
+  }
+
+  function otpBack(e) {
+    if (e) e.preventDefault();
+    document.getElementById('otpForm').style.display = 'none';
+    document.getElementById('authForm').style.display = '';
+    pendingEmail = '';
+    applyAuthModeUI();
+  }
+
+  function verifyOtp() {
+    if (!sb) return;
+    var code = document.getElementById('otpCode').value.trim();
+    var errEl = document.getElementById('otpErr');
+    var okEl = document.getElementById('otpOk');
+    errEl.textContent = ''; okEl.textContent = '';
+    if (!/^[0-9]{6}$/.test(code)) { errEl.textContent = t('otpNeed'); return; }
+    var btn = document.getElementById('otpBtn');
+    btn.disabled = true; btn.textContent = t('verifying');
+    sb.auth.verifyOtp({ email: pendingEmail, token: code, type: 'signup' }).then(function (res) {
+      btn.disabled = false; btn.textContent = t('verifyCode');
+      if (res.error) { errEl.textContent = t('otpWrong'); return; }
+      // success -> session created -> onAuthStateChange will open the app
+      pendingEmail = '';
+    });
+  }
+
+  function resendOtp(e) {
+    if (e) e.preventDefault();
+    if (!sb || !pendingEmail) return;
+    var okEl = document.getElementById('otpOk');
+    var errEl = document.getElementById('otpErr');
+    errEl.textContent = '';
+    sb.auth.resend({ type: 'signup', email: pendingEmail }).then(function (res) {
+      if (res.error) { errEl.textContent = t('otpResendFail'); }
+      else { okEl.textContent = t('otpResent'); }
     });
   }
 
@@ -1085,6 +1228,8 @@
   if (passEl) passEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') submitAuth(); });
   var pass2El = document.getElementById('loginPass2');
   if (pass2El) pass2El.addEventListener('keydown', function (e) { if (e.key === 'Enter') submitAuth(); });
+  var otpEl = document.getElementById('otpCode');
+  if (otpEl) otpEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') verifyOtp(); });
   buildMoneyBg();
   loadLocal();
   applyLang();
