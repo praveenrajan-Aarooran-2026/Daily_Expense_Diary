@@ -61,8 +61,71 @@
   .sync-badge.off { background: #eceae3; color: var(--ink-faint); }
   .header-btns { display: flex; gap: 8px; align-items: flex-start; }
   .signout-btn { color: var(--red) !important; }
-  .login-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 24px; }
-  .login-box { width: 100%; max-width: 360px; background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px 24px; }
+  .login-overlay { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 24px; overflow: hidden;
+    background: radial-gradient(1200px 800px at 20% 10%, #0d4d39 0%, #08311f 45%, #041a12 100%); }
+  .money-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  .money-bg .coin {
+    position: absolute; top: -10%; font-weight: 800; line-height: 1; user-select: none;
+    color: #6ff0b8; text-shadow: 0 0 12px rgba(80,230,160,0.85), 0 0 26px rgba(60,200,140,0.55), 0 0 48px rgba(40,170,120,0.35);
+    will-change: transform, opacity; animation: coinFall linear infinite;
+  }
+  .money-bg .coin.gold { color: #ffd76a; text-shadow: 0 0 12px rgba(255,200,80,0.9), 0 0 28px rgba(230,170,40,0.55), 0 0 50px rgba(200,140,20,0.35); }
+  .money-bg .note {
+    position: absolute; top: -12%; border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; color: rgba(255,255,255,0.92); user-select: none;
+    border: 1px solid rgba(255,255,255,0.35); box-shadow: 0 0 18px rgba(0,0,0,0.35), inset 0 0 12px rgba(255,255,255,0.15);
+    will-change: transform, opacity; animation: coinFall linear infinite; overflow: hidden;
+  }
+  .money-bg .note::before {
+    content: ''; position: absolute; width: 60%; height: 60%; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.3); opacity: 0.6;
+  }
+  .money-bg .note span { position: relative; z-index: 1; }
+  .money-bg .note.usd { background: linear-gradient(135deg, #2f7d52, #1d5a39); }
+  .money-bg .note.gbp { background: linear-gradient(135deg, #5b4b9c, #3b2f73); }
+  .money-bg .note.inr { background: linear-gradient(135deg, #c87f3a, #9a5f22); }
+  .money-bg .metalcoin {
+    position: absolute; top: -12%; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; user-select: none; will-change: transform, opacity;
+    animation: coinFall linear infinite;
+  }
+  .money-bg .metalcoin .face {
+    width: 100%; height: 100%; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    animation: coinSpin linear infinite;
+  }
+  .money-bg .metalcoin.gold .face {
+    background: radial-gradient(circle at 35% 30%, #fff3c4 0%, #ffd76a 35%, #d99a2e 55%, #b5781f 75%, #8a5a14 100%);
+    border: 2px solid #e3b24d; color: #6b4410; box-shadow: 0 0 16px rgba(255,200,80,0.6), inset 0 0 8px rgba(255,255,255,0.5);
+  }
+  .money-bg .metalcoin.silver .face {
+    background: radial-gradient(circle at 35% 30%, #ffffff 0%, #e2e8ec 35%, #b8c2c9 70%, #8c969d 100%);
+    border: 2px solid #cdd5da; color: #555f66; box-shadow: 0 0 16px rgba(200,220,235,0.6), inset 0 0 8px rgba(255,255,255,0.6);
+  }
+  @keyframes coinSpin {
+    0% { transform: rotateY(0deg); }
+    100% { transform: rotateY(360deg); }
+  }
+  @keyframes coinFall {
+    0%   { transform: translateY(-10vh) rotate(0deg) scale(0.9); opacity: 0; }
+    8%   { opacity: 0.9; }
+    92%  { opacity: 0.9; }
+    100% { transform: translateY(115vh) rotate(360deg) scale(1.05); opacity: 0; }
+  }
+  .money-bg .glow { position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.5; animation: glowPulse 7s ease-in-out infinite; }
+  .money-bg .glow.g1 { width: 380px; height: 380px; background: #14c878; top: -80px; left: -60px; }
+  .money-bg .glow.g2 { width: 320px; height: 320px; background: #0a8f5c; bottom: -90px; right: -50px; animation-delay: 2s; }
+  .money-bg .glow.g3 { width: 260px; height: 260px; background: #1f9d6b; top: 40%; left: 60%; animation-delay: 4s; }
+  @keyframes glowPulse { 0%,100% { transform: scale(1); opacity: 0.4; } 50% { transform: scale(1.25); opacity: 0.65; } }
+  .money-bg .grid { position: absolute; inset: 0; opacity: 0.12;
+    background-image: linear-gradient(rgba(110,240,184,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(110,240,184,0.5) 1px, transparent 1px);
+    background-size: 46px 46px; mask-image: radial-gradient(circle at 50% 40%, #000 30%, transparent 75%); -webkit-mask-image: radial-gradient(circle at 50% 40%, #000 30%, transparent 75%); }
+  .login-box { position: relative; z-index: 1; width: 100%; max-width: 360px;
+    background: rgba(255,255,255,0.94); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.5); border-radius: var(--radius);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.45), 0 0 0 1px rgba(110,240,184,0.15); padding: 28px 24px; }
+  .mode-badge { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: 0.12em; padding: 4px 12px; border-radius: 30px; margin-bottom: 10px; }
+  .mode-badge.signin { background: var(--green-soft); color: var(--green-text); }
+  .mode-badge.signup { background: #fff3d6; color: #9a6b00; }
   .login-sub { font-size: 14px; color: var(--ink-soft); margin-bottom: 20px; }
   .login-box input { width: 100%; border: 1.5px solid var(--line); border-radius: var(--radius-sm); padding: 13px; font-size: 16px; margin-bottom: 12px; outline: none; }
   .login-box input:focus { border-color: var(--green); }
@@ -213,11 +276,14 @@
 </head>
 <body>
 <div class="login-overlay" id="loginOverlay" style="display:none">
+  <div class="money-bg" aria-hidden="true" id="moneyBg"></div>
   <div class="login-box">
     <div class="brand" style="font-size:24px;margin-bottom:2px;">Daily Expense Diary<span>.</span></div>
+    <div class="mode-badge" id="modeBadge" data-i18n="signInMode">SIGN IN</div>
     <div class="login-sub" id="loginSub" data-i18n="loginSub">Sign in to your book</div>
     <input type="email" id="loginEmail" data-i18n-ph="emailPh" placeholder="Email" autocomplete="username" />
     <input type="password" id="loginPass" data-i18n-ph="passPh" placeholder="Password" autocomplete="current-password" />
+    <input type="password" id="loginPass2" data-i18n-ph="passPh2" placeholder="Confirm password" autocomplete="new-password" style="display:none" />
     <div class="login-err" id="loginErr"></div>
     <div class="login-ok" id="loginOk"></div>
     <button class="login-btn" id="loginBtn" onclick="submitAuth()" data-i18n="signIn">Sign in</button>
@@ -384,7 +450,9 @@
       signInLink: 'Sign in', signupSub: 'Create your own private book', createAccount: 'Create account',
       creating: 'Creating…', checkEmail: 'Check your email to confirm, then sign in.',
       emailTaken: 'That email is already registered', passShort: 'Password must be at least 6 characters',
-      confirmFirst: 'Please confirm your email first (check inbox)'
+      confirmFirst: 'Please confirm your email first (check inbox)',
+      passPh2: 'Confirm password', passMismatch: 'Passwords do not match',
+      signInMode: 'SIGN IN', signUpMode: 'SIGN UP'
     },
     ta: {
       tagline: 'தினசரி பண கணக்கு', netBalance: 'இருப்பு',
@@ -416,7 +484,9 @@
       signInLink: 'உள்நுழை', signupSub: 'உங்கள் சொந்த கணக்கை உருவாக்கவும்', createAccount: 'கணக்கை உருவாக்கு',
       creating: 'உருவாக்குகிறது…', checkEmail: 'உறுதிப்படுத்த மின்னஞ்சலைப் பார்க்கவும், பின் உள்நுழையவும்.',
       emailTaken: 'அந்த மின்னஞ்சல் ஏற்கனவே பதிவு செய்யப்பட்டுள்ளது', passShort: 'கடவுச்சொல் குறைந்தது 6 எழுத்துகள் இருக்க வேண்டும்',
-      confirmFirst: 'முதலில் உங்கள் மின்னஞ்சலை உறுதிப்படுத்தவும் (இன்பாக்ஸைப் பார்க்கவும்)'
+      confirmFirst: 'முதலில் உங்கள் மின்னஞ்சலை உறுதிப்படுத்தவும் (இன்பாக்ஸைப் பார்க்கவும்)',
+      passPh2: 'கடவுச்சொல்லை உறுதிப்படுத்தவும்', passMismatch: 'கடவுச்சொற்கள் பொருந்தவில்லை',
+      signInMode: 'உள்நுழைவு', signUpMode: 'பதிவு'
     }
   };
 
@@ -432,6 +502,7 @@
     });
     document.getElementById('langBtn').textContent = t('langLabel');
     setSyncBadge(curSyncState);
+    if (document.getElementById('modeBadge')) applyAuthModeUI();
     render();
   }
 
@@ -449,6 +520,58 @@
   }
 
   // Initialise cloud sync if configured. Falls back to local-only otherwise.
+  function buildMoneyBg() {
+    var bg = document.getElementById('moneyBg');
+    if (!bg) return;
+    var symbols = ['$', '₹', '€', '£', '¥', '₩', '฿', '₽', '₿'];
+    var html = '<div class="grid"></div><div class="glow g1"></div><div class="glow g2"></div><div class="glow g3"></div>';
+    // glowing symbols
+    for (var i = 0; i < 34; i++) {
+      var s = symbols[Math.floor(Math.random() * symbols.length)];
+      var left = Math.random() * 100;
+      var size = 16 + Math.random() * 42;
+      var dur = 6 + Math.random() * 9;
+      var delay = -Math.random() * 15;
+      var gold = Math.random() < 0.4 ? ' gold' : '';
+      html += '<span class="coin' + gold + '" style="left:' + left + '%;font-size:' + size +
+        'px;animation-duration:' + dur + 's;animation-delay:' + delay + 's;">' + s + '</span>';
+    }
+    // stylised banknotes ($, £, ₹)
+    var notes = [
+      { cls: 'usd', sym: '$', val: '100' },
+      { cls: 'gbp', sym: '£', val: '50' },
+      { cls: 'inr', sym: '₹', val: '500' }
+    ];
+    for (var j = 0; j < 16; j++) {
+      var n = notes[Math.floor(Math.random() * notes.length)];
+      var nleft = Math.random() * 100;
+      var w = 46 + Math.random() * 40;          // note width
+      var h = w * 0.5;                            // note aspect
+      var ndur = 8 + Math.random() * 10;
+      var ndelay = -Math.random() * 18;
+      var fs = Math.round(h * 0.5);
+      html += '<div class="note ' + n.cls + '" style="left:' + nleft + '%;width:' + w + 'px;height:' + h +
+        'px;font-size:' + fs + 'px;animation-duration:' + ndur + 's;animation-delay:' + ndelay +
+        's;"><span>' + n.sym + n.val + '</span></div>';
+    }
+    // spinning metallic coins (gold & silver) with embossed currency symbols
+    var coinSyms = ['$', '£', '₹', '€', '¥'];
+    for (var k = 0; k < 14; k++) {
+      var cs = coinSyms[Math.floor(Math.random() * coinSyms.length)];
+      var cleft = Math.random() * 100;
+      var d = 26 + Math.random() * 34;           // coin diameter
+      var cdur = 7 + Math.random() * 10;
+      var cdelay = -Math.random() * 17;
+      var sdur = 2 + Math.random() * 3;          // spin speed
+      var metal = Math.random() < 0.5 ? 'gold' : 'silver';
+      var cfs = Math.round(d * 0.42);
+      html += '<div class="metalcoin ' + metal + '" style="left:' + cleft + '%;width:' + d + 'px;height:' + d +
+        'px;font-size:' + cfs + 'px;animation-duration:' + cdur + 's;animation-delay:' + cdelay +
+        's;"><div class="face" style="animation-duration:' + sdur + 's;animation-delay:' + cdelay + 's;">' + cs + '</div></div>';
+    }
+    bg.innerHTML = html;
+  }
+
   function initSync() {
     var configured = SUPABASE_URL.indexOf('PASTE_') < 0 && SUPABASE_KEY.indexOf('PASTE_') < 0 &&
       SUPABASE_URL && SUPABASE_KEY && typeof supabase !== 'undefined';
@@ -497,19 +620,32 @@
     authMode = (authMode === 'login') ? 'signup' : 'login';
     document.getElementById('loginErr').textContent = '';
     document.getElementById('loginOk').textContent = '';
+    document.getElementById('loginPass2').value = '';
+    applyAuthModeUI();
+  }
+
+  function applyAuthModeUI() {
     var btn = document.getElementById('loginBtn');
+    var badge = document.getElementById('modeBadge');
+    var pass2 = document.getElementById('loginPass2');
     if (authMode === 'signup') {
       document.getElementById('loginSub').textContent = t('signupSub');
       btn.textContent = t('createAccount');
       document.getElementById('toggleText').textContent = t('haveAccount');
       document.getElementById('toggleLink').textContent = t('signInLink');
       document.getElementById('loginPass').setAttribute('autocomplete', 'new-password');
+      pass2.style.display = '';
+      badge.textContent = t('signUpMode');
+      badge.className = 'mode-badge signup';
     } else {
       document.getElementById('loginSub').textContent = t('loginSub');
       btn.textContent = t('signIn');
       document.getElementById('toggleText').textContent = t('noAccount');
       document.getElementById('toggleLink').textContent = t('createOne');
       document.getElementById('loginPass').setAttribute('autocomplete', 'current-password');
+      pass2.style.display = 'none';
+      badge.textContent = t('signInMode');
+      badge.className = 'mode-badge signin';
     }
   }
 
@@ -541,11 +677,13 @@
     if (!sb) return;
     var email = document.getElementById('loginEmail').value.trim();
     var pass = document.getElementById('loginPass').value;
+    var pass2 = document.getElementById('loginPass2').value;
     var errEl = document.getElementById('loginErr');
     var okEl = document.getElementById('loginOk');
     errEl.textContent = ''; okEl.textContent = '';
     if (!email || !pass) { errEl.textContent = t('loginNeed'); return; }
     if (pass.length < 6) { errEl.textContent = t('passShort'); return; }
+    if (pass !== pass2) { errEl.textContent = t('passMismatch'); return; }
     var btn = document.getElementById('loginBtn');
     btn.disabled = true; btn.textContent = t('creating');
     sb.auth.signUp({ email: email, password: pass }).then(function (res) {
@@ -945,6 +1083,9 @@
   document.getElementById('date').value = new Date().toISOString().slice(0, 10);
   var passEl = document.getElementById('loginPass');
   if (passEl) passEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') submitAuth(); });
+  var pass2El = document.getElementById('loginPass2');
+  if (pass2El) pass2El.addEventListener('keydown', function (e) { if (e.key === 'Enter') submitAuth(); });
+  buildMoneyBg();
   loadLocal();
   applyLang();
   initSync();
